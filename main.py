@@ -52,20 +52,20 @@ def make_and_send_slack_msg():
     # output 폴더의 모든 CSV 파일 처리
     output_dir = "output"
     agencies = {
-        "fsc_press_releases.csv": "금융위원회",
-        "fss_press_releases.csv": "금융감독원",
-        "pipc_press_releases.csv": "개인정보보호 위원회",
-        "fsec_press_releases.csv": "금융보안원",
-        "kinternet_press_releases.csv": "한국 인터넷 기업협회",
-        "bkl_newsletters.csv": "법무법인 태평양",
-        "yulchon_newsletters.csv": "법무법인 율촌"
+        "fsc_press_releases.csv": ("금융위원회", "https://www.fsc.go.kr"),
+        "fss_press_releases.csv": ("금융감독원", "https://www.fss.or.kr"),
+        "pipc_press_releases.csv": ("개인정보보호 위원회", "https://www.pipc.go.kr"),
+        "fsec_press_releases.csv": ("금융보안원", "https://www.fsec.or.kr"),
+        "kinternet_press_releases.csv": ("한국 인터넷 기업협회", "https://www.kinternet.org"),
+        "bkl_newsletters.csv": ("법무법인 태평양", "https://www.bkl.co.kr"),
+        "yulchon_newsletters.csv": ("법무법인 율촌", "https://www.yulchon.com")
     }
 
     final_message = ""
-    for file_name, agency_name in agencies.items():
+    for file_name, (agency_name, base_url) in agencies.items():
         file_path = os.path.join(output_dir, file_name)
         if os.path.exists(file_path):
-            message = read_csv_and_format_message(file_path, agency_name)
+            message = read_csv_and_format_message(file_path, agency_name, base_url)
             if message:  # 만약 파일에 항목이 있으면 메시지를 추가합니다.
                 final_message += f"{message}\n"
 
@@ -83,3 +83,5 @@ def make_and_send_slack_msg():
 if __name__ == "__main__":
     scrap_and_notify()  # 스크래핑 실행 및 오류 발생 시 알림
     make_and_send_slack_msg()  # 슬랙 메시지 발송
+    print("\033[92m모든 작업이 완료되었습니다\033[0m")
+
