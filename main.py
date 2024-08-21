@@ -72,11 +72,11 @@ def make_and_send_slack_msg():
     # 최종 메시지 전송
     today_date = datetime.now(kst).strftime("%m월 %d일")
     if final_message:
-        header = f"*:judge: [{today_date}자 오늘의 법률 소식]*\n\n"
+        header = f"*:judge: [{today_date}일, 새로운 법률 소식]*\n\n"
         notifier.send_message(header + final_message)
     else:
         # 만약 final_message가 빈 문자열이면 "업데이트된 법률 소식이 없음" 메시지 전송
-        no_update_message = f"*:judge: [{today_date}자 오늘의 법률 소식]*\n\n*오늘은 업데이트된 법률 소식이 없어요!*"
+        no_update_message = f"*:judge: [{today_date}일, 새로운 법률 소식]*\n\n*신규로 업데이트된 법률 소식이 없어요!*"
         notifier.send_message(no_update_message)
 
 
