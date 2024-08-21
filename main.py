@@ -11,51 +11,40 @@ from src.module.YulchonNewsletterScraper import YulchonNewsletterScraper
 from src.util.Utils import read_csv_and_format_message
 from src.slack.SlackNotifier import SlackNotifier
 from config import WEBHOOK_URL
+from datetime import datetime
+import pytz
 
+# 한국 시간(KST) 타임존 설정
+kst = pytz.timezone('Asia/Seoul')
 
-def main():
+def scrap_and_notify():
     """
-    스크래핑
+    스크래핑과 에러 발생 시 슬랙 알림
     """
-    # 금융위원회
-    scraper = FSCPressReleaseScraper()
-    scraper.scrape()
+    scraper_classes = [
+        ("금융위원회", FSCPressReleaseScraper),
+        ("금융감독원", FSSPressReleaseScraper),
+        ("개인정보보호 위원회", PIPCPressReleaseScraper),
+        ("금융보안원", FSECPressReleaseScraper),
+        ("한국 인터넷 기업협회", KInternetPressReleaseScraper),
+        ("법무법인 태평양", BKLNewsletterScraper),
+        ("법무법인 율촌", YulchonNewsletterScraper)
+    ]
 
-    # 금융감독원
-    scraper = FSSPressReleaseScraper()
-    scraper.scrape()
+    notifier = SlackNotifier(WEBHOOK_URL)
 
-    # 개인정보보호 위원회
-    scraper = PIPCPressReleaseScraper()
-    scraper.scrape()
+    for agency_name, ScraperClass in scraper_classes:
+        scraper = ScraperClass()
+        try:
+            scraper.scrape()
+        except Exception as e:
+            # 스크래핑 중 에러가 발생했을 경우 슬랙 메시지 발송
+            error_message = f"⚠️ [{agency_name}] 모듈에서 문제가 발생했습니다. HTML 구조가 변경되었을수 있으니 확인해주세요!"
+            notifier.send_message(error_message)
+            print(error_message)  # 콘솔에도 출력
 
-    # 한국 금융 연구원
-    # scraper = KIFPressReleaseScraper()
-    # scraper.scrape()
 
-    # 금융보안원
-    scraper = FSECPressReleaseScraper()
-    scraper.scrape()
-
-    # 한국 인터넷 기업협회
-    scraper = KInternetPressReleaseScraper()
-    scraper.scrape()
-
-    # 법무법인 세종
-    # scraper = SejongNewsletterScraper()
-    # scraper.scrape()
-
-    # 법무법인 태평양
-    scraper = BKLNewsletterScraper()
-    scraper.scrape()
-
-    # 법무법인 율촌
-    scraper = YulchonNewsletterScraper()
-    scraper.scrape()
-
-    """
-    슬랙 메세지 발송
-    """
+def make_and_send_slack_msg():
     # Slack Webhook URL 설정
     webhook_url = WEBHOOK_URL
     notifier = SlackNotifier(webhook_url)
@@ -77,14 +66,20 @@ def main():
         file_path = os.path.join(output_dir, file_name)
         if os.path.exists(file_path):
             message = read_csv_and_format_message(file_path, agency_name)
-            final_message += f"{message}\n"
+            if message:  # 만약 파일에 항목이 있으면 메시지를 추가합니다.
+                final_message += f"{message}\n"
 
     # 최종 메시지 전송
+    today_date = datetime.now(kst).strftime("%m월 %d일")
     if final_message:
-        notifier.send_message(final_message)
+        header = f"*:judge: [{today_date}자 오늘의 법률 소식]*\n\n"
+        notifier.send_message(header + final_message)
     else:
-        print("No messages to send.")
+        # 만약 final_message가 빈 문자열이면 "업데이트된 법률 소식이 없음" 메시지 전송
+        no_update_message = f"*:judge: [{today_date}자 오늘의 법률 소식]*\n\n*오늘은 업데이트된 법률 소식이 없어요!*"
+        notifier.send_message(no_update_message)
 
 
 if __name__ == "__main__":
-    main()
+    scrap_and_notify()  # 스크래핑 실행 및 오류 발생 시 알림
+    make_and_send_slack_msg()  # 슬랙 메시지 발송

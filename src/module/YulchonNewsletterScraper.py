@@ -31,7 +31,7 @@ class YulchonNewsletterScraper:
         for idx, item in enumerate(items):
             date = item.select_one('.date').get_text(strip=True)
             if date == yesterday:
-                title_element = item.select_one('.title em')
+                title_element = item.select_one('.title')
                 title = title_element.get_text(strip=True) if title_element else "제목 없음"
                 # 링크 추출 및 base_url과 결합
                 link_element = item.select_one('.new_post_link')
