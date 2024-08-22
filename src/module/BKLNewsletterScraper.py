@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 import os
+import pytz  # 추가: 한국 시간(KST) 설정을 위해 필요
 from ..util.Utils import save_to_csv, get_html
 
 # 법무법인 태평양
@@ -11,6 +12,7 @@ class BKLNewsletterScraper:
         self.newsletter_url = f"{self.base_url}/law/insight/legalDataList?searchCondition=&searchKeyword=&searchDateFrom=&searchDateTo=&orderBy=orderByNew&pageIndex=2&whichOne=NEWSLETTER&menuType=law&lang=ko"
         self.output_dir = "output"
         self.ensure_output_dir()
+        self.kst = pytz.timezone('Asia/Seoul')  # 추가: KST 타임존 설정
 
     def ensure_output_dir(self):
         # output 디렉토리가 없으면 생성합니다.
@@ -22,7 +24,7 @@ class BKLNewsletterScraper:
         print("HTML 콘텐츠를 파싱하는 중입니다...")
         soup = BeautifulSoup(html, 'html.parser')
         newsletters = []
-        yesterday = (datetime.today() - timedelta(days=1)).strftime('%Y.%m.%d')
+        yesterday = (datetime.now(self.kst) - timedelta(days=1)).strftime('%Y.%m.%d')
 
         items = soup.select('.txt-type1 ul li')
         total_items = len(items)
