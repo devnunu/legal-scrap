@@ -17,6 +17,7 @@ import pytz
 # 한국 시간(KST) 타임존 설정
 kst = pytz.timezone('Asia/Seoul')
 
+
 def scrap_and_notify():
     """
     스크래핑과 에러 발생 시 슬랙 알림
@@ -24,11 +25,11 @@ def scrap_and_notify():
     scraper_classes = [
         ("금융위원회", FSCPressReleaseScraper),
         ("금융감독원", FSSPressReleaseScraper),
-        ("개인정보보호 위원회", PIPCPressReleaseScraper),
+        ("개인정보보호위원회", PIPCPressReleaseScraper),
         ("금융보안원", FSECPressReleaseScraper),
-        ("한국 인터넷 기업협회", KInternetPressReleaseScraper),
-        ("법무법인 태평양", BKLNewsletterScraper),
-        ("법무법인 율촌", YulchonNewsletterScraper)
+        ("한국인터넷기업협회", KInternetPressReleaseScraper),
+        ("법무법인 태평양 뉴스레터", BKLNewsletterScraper),
+        ("법무법인 율촌 뉴스레터", YulchonNewsletterScraper)
     ]
 
     notifier = SlackNotifier(WEBHOOK_URL)
@@ -54,11 +55,14 @@ def make_and_send_slack_msg():
     agencies = {
         "fsc_press_releases.csv": ("금융위원회", "https://www.fsc.go.kr"),
         "fss_press_releases.csv": ("금융감독원", "https://www.fss.or.kr"),
-        "pipc_press_releases.csv": ("개인정보보호 위원회", "https://www.pipc.go.kr"),
+        "pipc_press_releases.csv": ("개인정보보호위원회", "https://www.pipc.go.kr"),
         "fsec_press_releases.csv": ("금융보안원", "https://www.fsec.or.kr"),
-        "kinternet_press_releases.csv": ("한국 인터넷 기업협회", "https://www.kinternet.org"),
-        "bkl_newsletters.csv": ("법무법인 태평양", "https://www.bkl.co.kr"),
-        "yulchon_newsletters.csv": ("법무법인 율촌", "https://www.yulchon.com")
+        "kinternet_press_releases.csv": ("한국인터넷기업협회", "https://www.kinternet.org"),
+        "bkl_newsletters.csv": ("법무법인 태평양 뉴스레터",
+                                "https://www.bkl.co.kr/law/insight/legalDataList?searchCondition=&searchKeyword=&searchDateFrom=&searchDateTo=&orderBy=orderByNew&pageIndex=2&whichOne=NEWSLETTER&menuType=law&lawNo=&expertNo=&newsletterNo=&memberNo=&fieldNo=&lang=ko"),
+        "yulchon_newsletters.csv": ("법무법인 율촌 뉴스레터", "https://www.yulchon.com/ko/resources/publications/newsletter.do"),
+        "hanaif_press_releases.csv": ("하나금융연구소", "https://www.hanaif.re.kr"),
+        "kbif_research_releases.csv": ("KB금융연구소", "https://www.kbfg.com")
     }
 
     final_message = ""
@@ -72,11 +76,12 @@ def make_and_send_slack_msg():
     # 최종 메시지 전송
     today_date = datetime.now(kst).strftime("%m월 %d일")
     if final_message:
-        header = f"*:judge: [{today_date}, 새로운 법률 소식]*\n\n"
-        notifier.send_message(header + final_message)
+        header = f"*:judge: [{today_date}, 새로운 정책 소식]*\n\n"
+        print(header + final_message)
+        # notifier.send_message(header + final_message)
     else:
         # 만약 final_message가 빈 문자열이면 "업데이트된 법률 소식이 없음" 메시지 전송
-        no_update_message = f"*:judge: [{today_date}, 새로운 법률 소식]*\n\n*신규로 업데이트된 법률 소식이 없어요!*"
+        no_update_message = f"*:judge: [{today_date}, 새로운 정책 소식]*\n\n*신규로 업데이트된 정책 소식이 없어요!*"
         notifier.send_message(no_update_message)
 
 
@@ -84,4 +89,3 @@ if __name__ == "__main__":
     scrap_and_notify()  # 스크래핑 실행 및 오류 발생 시 알림
     make_and_send_slack_msg()  # 슬랙 메시지 발송
     print("\033[92m모든 작업이 완료되었습니다\033[0m")
-

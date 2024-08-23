@@ -5,7 +5,7 @@ import os
 import pytz  # 추가: 한국 시간(KST) 설정을 위해 필요
 from ..util.Utils import save_to_csv, get_html
 
-# 법무법인 태평양
+# 법무법인 태평양 뉴스레터
 class BKLNewsletterScraper:
     def __init__(self):
         self.base_url = "https://www.bkl.co.kr"
@@ -42,7 +42,7 @@ class BKLNewsletterScraper:
                     'title': title,
                     'link': link,
                     'date': date,
-                    'agency': '법무법인 태평양'
+                    'agency': '법무법인 태평양 뉴스레터'
                 })
             print(f"{idx + 1}/{total_items} 항목 처리 완료.", end="\r")
 
@@ -59,4 +59,4 @@ class BKLNewsletterScraper:
             print("어제 날짜의 뉴스레터를 찾지 못했습니다.")
 
         # 스크래핑 완료 메시지 출력 (보라색 텍스트)
-        print("\033[95m법무법인 태평양 스크래핑이 완료되었습니다\033[0m")
+        print("\033[95m법무법인 태평양 뉴스레터 스크래핑이 완료되었습니다\033[0m")
