@@ -2,16 +2,17 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 import os
-import pytz  # 추가: 한국 시간(KST) 설정을 위해 필요
+import pytz
 from ..util.Utils import save_to_csv, get_html
+
 
 class KInternetPressReleaseScraper:
     def __init__(self):
         self.press_release_url = "https://www.kinternet.org/03_new/new04.asp"
-        self.policy_data_url = "https://www.kinternet.org/04_pol/pol02.asp"  # 추가: 두 번째 URL
+        self.policy_data_url = "https://www.kinternet.org/04_pol/pol02.asp"
         self.output_dir = "output"
         self.ensure_output_dir()
-        self.kst = pytz.timezone('Asia/Seoul')  # 추가: KST 타임존 설정
+        self.kst = pytz.timezone('Asia/Seoul')
 
     def ensure_output_dir(self):
         if not os.path.exists(self.output_dir):
@@ -29,17 +30,35 @@ class KInternetPressReleaseScraper:
         print(f"총 {total_items}개의 항목이 발견되었습니다 (보도자료). 처리 중입니다...")
 
         for idx, item in enumerate(items):
-            date = item.select_one('td:nth-child(3) p').get_text(strip=True)
+            date_element = item.select_one('td p.cate')
+            if not date_element:
+                continue
+
+            date = date_element.get_text(strip=True)
+
             if date == yesterday:
-                title_element = item.select_one('td:nth-child(2) a')
+                title_element = item.select_one('td a')
+                if not title_element:
+                    continue
+
                 title = title_element.get_text(strip=True)
-                article_id = title_element['href'].split('(')[1].split(')')[0]
-                link = f"javascript:ViewFunc({article_id})"
+                href = title_element.get('href', '')
+
+                # 보도자료는 내부 링크와 외부 링크 모두 있음
+                if href.startswith('javascript:'):
+                    try:
+                        article_id = href.split('(')[1].split(')')[0]
+                        link = f"javascript:ViewFunc({article_id})"
+                    except:
+                        link = href
+                else:
+                    link = href
+
                 releases.append({
                     'title': title,
                     'link': link,
                     'date': date,
-                    'agency': '한국 인터넷 진흥원 (보도자료)'
+                    'agency': '한국 인터넷 기업협회 (보도자료)'
                 })
             print(f"{idx + 1}/{total_items} 항목 처리 완료 (보도자료).", end="\r")
 
@@ -57,17 +76,36 @@ class KInternetPressReleaseScraper:
         print(f"총 {total_items}개의 항목이 발견되었습니다 (정책자료실). 처리 중입니다...")
 
         for idx, item in enumerate(items):
-            date = item.select_one('td:nth-child(4) p').get_text(strip=True)
+            # 정책자료실은 날짜가 4번째 열에 있음
+            date_element = item.select_one('td:nth-child(4) p.cate')
+            if not date_element:
+                continue
+
+            date = date_element.get_text(strip=True)
+
             if date == yesterday:
                 title_element = item.select_one('td:nth-child(2) a')
+                if not title_element:
+                    continue
+
                 title = title_element.get_text(strip=True)
-                article_id = title_element['href'].split('(')[1].split(')')[0]
-                link = f"javascript:ViewFunc({article_id})"
+                href = title_element.get('href', '')
+
+                # 정책자료실은 모두 javascript:ViewFunc() 형식임
+                if href.startswith('javascript:'):
+                    try:
+                        article_id = href.split('(')[1].split(')')[0]
+                        link = f"javascript:ViewFunc({article_id})"
+                    except:
+                        link = href
+                else:
+                    link = href
+
                 releases.append({
                     'title': title,
                     'link': link,
                     'date': date,
-                    'agency': '한국 인터넷 진흥원 (정책자료실)'
+                    'agency': '한국 인터넷 기업협회 (정책자료실)'
                 })
             print(f"{idx + 1}/{total_items} 항목 처리 완료 (정책자료실).", end="\r")
 
@@ -94,4 +132,4 @@ class KInternetPressReleaseScraper:
         else:
             print("어제 날짜의 자료를 찾지 못했습니다.")
 
-        print("\033[95m한국 인터넷 진흥원 스크래핑이 완료되었습니다\033[0m")
+        print("\033[95m한국 인터넷 기업협회 스크래핑이 완료되었습니다\033[0m")
